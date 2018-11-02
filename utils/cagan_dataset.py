@@ -9,10 +9,10 @@ import glob
 import os
 
 class CAGAN_Dataset(data.Dataset):
-    def __init__(self, dataroot='data', mode='train', img_size=(256, 192)):
+    def __init__(self, opt, img_size=(256, 192)):
         super(CAGAN_Dataset, self).__init__()
-        self.data_dir = os.path.join(dataroot, 'imgs_'+mode)
-        self.mode = mode
+        self.mode = opt.mode
+        self.data_dir = os.path.join(opt.data_root, 'imgs_'+self.mode)
         self.human_names = self.get_filenames(os.path.join(self.data_dir, '1/*'))
         self.cloth_names = self.get_filenames(os.path.join(self.data_dir, '5/*'))
         self.height, self.width = img_size

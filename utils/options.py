@@ -1,6 +1,8 @@
 import argparse
 import json
 import os
+import warnings
+
 class GatherOptions():
     def __init__(self):
         parser = argparse.ArgumentParser(description="train or test CAGAN-v2")
@@ -23,7 +25,9 @@ class GatherOptions():
         parser.add_argument('--niter_decay', type=int, default=-1, help='# of iter to linearly decay learning rate to zero, default at the end of training')
         parser.add_argument('--lr_decay_iters', type=int, default=7, help="multiply by a gamma every lr_decay_iters iterations")
         parser.add_argument('--up_type', type=str, default='Tconv', help='the type of upscale: Tconv|bilinear|nearest|ps (pixel shuffle)')
-        parser.add_argument('--use_mixup', action='store_false', help="mixup real and fake before inputing netD")
+        parser.add_argument('--no_mixup', action='store_true', help="mixup real and fake before inputing netD")
+        # parser.add_argument('--no_cycle', action='store_true', help='use cycleGAN in training')
+        parser.add_argument('--use_lsgan', action='store_true', help='use least square GAN')
         parser.add_argument('--gamma_i', type=float, default=0.1, help="weight of id loss")
         parser.add_argument('--ngf', type=int, default=64, help="# of gen filters in first conv layer")
         parser.add_argument('--nc_G_inp', type=int, default=9, help="# of gen input channel ")
@@ -44,7 +48,7 @@ class GatherOptions():
             self.compare_config_test(['up_type', 'ngf', 'nc_G_inf'])
         elif opt.resume:
             self.compare_config_train(['mode', 'save_dir', 'model_dir', 'resume',
-                                       'step', 'save_model_freq', 'save_iamge_freq'])
+                                       'step', 'save_model_freq', 'save_image_freq'])
         else:
             with open(self.config_path, 'w') as f:
                 json.dump(self.opt.__dict__, f)
@@ -56,13 +60,12 @@ class GatherOptions():
             with open(self.config_path, 'r') as f:
                 train_opt_dict = json.load(f)
         except FileNotFoundError:
-            Warning("Not Found opt.json in %s"%opt.save_dir)
+            warnings.warn("Not Found opt.json in %s"%self.opt.save_dir)
         else:
             for key, data in train_opt_dict.items():
                 if key not in except_names:
                     if self.opt.__dict__[key] != data:
-                        raise Warning('model config is conflic, %s should \
-                                            be %s'(key, train_opt_dict[key]))
+                        warnings.warn('model config is conflic, %s should be \'%s\'!'%(key, data))
 
 
     def compare_config_test(self, config_names):
@@ -70,10 +73,9 @@ class GatherOptions():
             with open(self.config_path, 'r') as f:
                 train_opt_dict = json.load(f)
         except FileNotFoundError:
-            Warning("Not Found opt.json in %s"%opt.save_dir)
+            warnings.warn("Not Found opt.json in %s"%self.opt.save_dir)
         else:
             for key, data in train_opt_dict.items():
                 if key in config_names:
                     if self.opt.__dict__[key] != data:
-                        raise Exception('model config is conflic, %s should \
-                                        be %s'(key, train_opt_dict[key]))
+                        raise Exception('model config is conflic, %s should be \'%s\'!'%(key, data))

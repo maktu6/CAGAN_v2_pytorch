@@ -54,10 +54,10 @@ def get_scheduler(optimizer, opt):
     return scheduler
 
 class CAGAN_Trainer(object):
-    def __init__(self, opt, is_train=True, save_dir='train_logs/test/' ,device='cuda:0', is_cyclic=True, use_lsgan=False, img_size=(256, 192)):
-        self.is_train = is_train
-        self.save_dir = save_dir
-        os.makedirs(save_dir, exist_ok=True)
+    def __init__(self, opt, device='cuda:0', use_lsgan=False, img_size=(256, 192)):
+        self.is_train = (opt.mode == 'train')
+        self.save_dir = opt.save_dir
+        os.makedirs(self.save_dir, exist_ok=True)
         self.device = device
         self.img_sizes = []
         for i in [4, 2, 1]:
@@ -66,10 +66,11 @@ class CAGAN_Trainer(object):
         self.nets = [Unet_Dilate(opt.nc_G_inp, nc_G_out, opt.ngf, up_type=opt.up_type)]
         if self.is_train:
             for i in range(3):
-                self.nets.append(Basic_D(nc_D_inp, ndf, use_sigmoid = not use_lsgan))
+                self.nets.append(Basic_D(nc_D_inp, ndf, use_sigmoid = not opt.use_lsgan))
             map(init_weights, self.nets)
-            self.use_mixup = opt.use_mixup
-            self.is_cyclic = is_cyclic
+            self.use_mixup = not opt.no_mixup
+            # TODO Implement no cycleGAN in training
+            # self.is_cyclic = not opt.no_cycle
             if self.use_mixup:
                 self.beta_dist = torch.distributions.beta.Beta(torch.tensor([mixup_alpha]), torch.tensor([mixup_alpha]))
             # optimizer
@@ -83,7 +84,7 @@ class CAGAN_Trainer(object):
             optimizers.append(self.opti_D)
             self.schedulers = [get_scheduler(optimizer, opt) for optimizer in optimizers]
             # loss function
-            if use_lsgan:
+            if opt.use_lsgan:
                 self.loss_fn = nn.MSELoss()
             else:
                 self.loss_fn = nn.BCELoss()
@@ -264,7 +265,7 @@ class CAGAN_Trainer(object):
             if re.match(r'netG\_(\d+)\.pth$', name):
                 step = re.match(r'.+\_(\d+)\.pth$', name).group(1)
             else:
-                raise Exception('%s is not a correct model path for match'%name[-1])
+                raise Exception('%s is not a correct model path for match'%name)
         netD_path = os.path.join(load_dir, 'netG_%s.pth'%step)
         params = torch.load(netD_path, map_location=str(self.device))
         self.nets[0].load_state_dict(params)
