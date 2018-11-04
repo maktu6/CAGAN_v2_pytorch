@@ -7,7 +7,6 @@ from tqdm import tqdm
 
 opt = options.GatherOptions().parse()
 cagan_dataset = cagan_dataset.CAGAN_Dataset(opt)
-model = trainer.CAGAN_Trainer(opt)
 
 if opt.mode == "train":
 
@@ -16,6 +15,7 @@ if opt.mode == "train":
     # calculate num of steps for decaying learning to zero at the end of training
     if (opt.lr_policy == 'lambda') and (opt.niter_decay == -1):
         opt.niter_decay = opt.epoch*len(train_dataloader) - opt.niter
+    model = trainer.CAGAN_Trainer(opt)
 
     vis_custom = visualizer.Visualizer(opt.mode)
     vis_custom.reset_env()
@@ -30,6 +30,8 @@ if opt.mode == "train":
             print("Loss dict can not be found in %s"%opt.save_dir)
 
     for epoch in range(opt.epoch):
+        if opt.lr_policy not in ['lambda']:
+            model.update_learning_rate()
         for real in train_dataloader:
             step += 1
             model.set_input(real)
@@ -50,17 +52,16 @@ if opt.mode == "train":
                 torch.save(vis_custom.plot_data, loss_save_path)
             if opt.lr_policy in ['lambda']:
                 model.update_learning_rate()
-        if opt.lr_policy not in ['lambda']:
-            model.update_learning_rate()
 
     model.save_current_visuals(step, opt.batchsize)
     model.save_networks(step)
 else:
+    test_dataloader = data.DataLoader(cagan_dataset, opt.batchsize, shuffle=False,
+                                    num_workers=opt.num_workers, pin_memory=True)
     inception_model = IS_score.INCEPTION_V3()
     inception_model.eval()
     inception_model.to('cuda')
-    test_dataloader = data.DataLoader(cagan_dataset, opt.batchsize, shuffle=False,
-                                    num_workers=opt.num_workers, pin_memory=True)
+    model = trainer.CAGAN_Trainer(opt)
     step = None
     if opt.step != 0:
         step = opt.step
