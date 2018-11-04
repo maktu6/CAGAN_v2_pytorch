@@ -147,26 +147,21 @@ class CAGAN_Trainer(object):
 
     def loss_D_basic(self, netD, real, fake):
         xi, yi, yj = get_xi_yi_yj(real)
-        lam = self.beta_dist.sample().to(self.device)
 
+        output_fake2 = netD(torch.cat([xi, yj], 1)) # negative sample 2 
+        loss_D_fake2 = self.loss_fn(output_fake2, torch.zeros_like(output_fake2, device=self.device))   
         if self.use_mixup:
+            lam = self.beta_dist.sample().to(self.device)
             mixup_x = lam*xi + (1-lam)*fake.detach()
             mixup_y = lam*yi + (1-lam)*yj
             output_real = netD(torch.cat([mixup_x, mixup_y], 1)) # positive sample + negative sample
-            output_fake2 = netD(torch.cat([xi, yj], 1)) # negative sample 2 
+            loss_D_real = self.loss_fn(output_real, lam*torch.ones_like(output_real, device=self.device)) 
+            loss_D = loss_D_real+ loss_D_fake2
         else:
             output_real = netD(torch.cat([xi, yi], 1)) # positive sample
             output_fake1 = netD(torch.cat([fake.detach(), yj], 1)) # negative sample
-            output_fake2 = netD(torch.cat([xi, yj], 1)) # negative sample 2 
-
             loss_D_fake1 = self.loss_fn(output_fake1, torch.zeros_like(output_fake1, device=self.device))
-        
-        loss_D_real = self.loss_fn(output_real, lam*torch.ones_like(output_real, device=self.device)) 
-        loss_D_fake2 = self.loss_fn(output_fake2, torch.zeros_like(output_fake2, device=self.device))   
-        
-        if self.use_mixup:
-            loss_D = loss_D_real+ loss_D_fake2
-        else:
+            loss_D_real = self.loss_fn(output_real, torch.ones_like(output_real, device=self.device)) 
             loss_D = loss_D_real+ (loss_D_fake1+loss_D_fake2)
         
         return loss_D

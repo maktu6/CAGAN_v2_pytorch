@@ -50,6 +50,7 @@ class GatherOptions():
             self.compare_config_train(['mode', 'save_dir', 'model_dir', 'resume',
                                        'step', 'save_model_freq', 'save_image_freq'])
         else:
+            os.makedirs(opt.save_dir, exist_ok=True)
             with open(self.config_path, 'w') as f:
                 json.dump(self.opt.__dict__, f)
 
