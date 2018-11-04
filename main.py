@@ -7,8 +7,6 @@ from tqdm import tqdm
 
 opt = options.GatherOptions().parse()
 cagan_dataset = cagan_dataset.CAGAN_Dataset(opt)
-if (opt.lr_policy == 'lambda') and (opt.niter_decay == -1):
-    opt.niter_decay = opt.epoch*len(cagan_dataset) - opt.niter
 model = trainer.CAGAN_Trainer(opt)
 
 if opt.mode == "train":
@@ -16,7 +14,8 @@ if opt.mode == "train":
     train_dataloader = data.DataLoader(cagan_dataset, opt.batchsize, shuffle=True,
                                     num_workers=opt.num_workers, pin_memory=True)
     # calculate num of steps for decaying learning to zero at the end of training
-
+    if (opt.lr_policy == 'lambda') and (opt.niter_decay == -1):
+        opt.niter_decay = opt.epoch*len(train_dataloader) - opt.niter
 
     vis_custom = visualizer.Visualizer(opt.mode)
     vis_custom.reset_env()
