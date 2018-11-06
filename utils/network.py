@@ -90,7 +90,7 @@ class UpscaleBlock(nn.Module):
             block['convT'] = nn.ConvTranspose2d(nf_in, nf_out, (4,3), 2,
                                                 padding=1, bias=False)
             block['pad'] = nn.ReflectionPad2d((0,1,0,0))
-        elif up_type == 'Tconv':
+        elif up_type == 'ps':
             block['conv'] = Conv2dSame(nf_in, nf_out*4, (4,3), bias=False)
             block['ps'] = nn.PixelShuffle(2)
         block['bn'] = nn.InstanceNorm2d(nf_out, affine=True)
