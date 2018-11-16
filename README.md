@@ -1,5 +1,5 @@
 # CAGAN_v2_pytorch
-A PyTorch implementation of [CAGAN](https://arxiv.org/abs/1709.04695) combined with [StackGAN-v2](https://arxiv.org/abs/1710.10916)  
+A PyTorch implementation of [The Conditional Analogy GAN](https://arxiv.org/abs/1709.04695) combined with [StackGAN-v2](https://arxiv.org/abs/1710.10916)  
 Code based on the [original implementation in keras](https://github.com/shaoanlu/Conditional-Analogy-GAN-keras)  
 The following repositories were also referenced:   
 - [https://github.com/hanzhanggit/StackGAN-v2](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix)
