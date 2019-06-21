@@ -183,7 +183,7 @@ class Unet_Dilate(nn.Module):
         else:
             self.norm_layer = nn.BatchNorm2d 
         relu = partial(nn.ReLU, True)
-        leak_relu = partial(nn.LeakyReLU, 0.02, True)
+        leak_relu = partial(nn.LeakyReLU, 0.2, True)
         
         self.pool0_0 = nn.AvgPool2d(2)
         self.pool0_1 = nn.AvgPool2d(4)
