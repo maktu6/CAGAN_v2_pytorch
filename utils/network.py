@@ -53,25 +53,26 @@ class Basic_D(nn.Module):
     """
     def __init__(self, nc_in, ndf, max_layers=3, use_sigmoid=True):
         super(Basic_D, self).__init__()
-        basic_d = OrderedDict({'noise': GaussianNoise(0.05),
-                               'conv0': Conv2dSame(nc_in, ndf, (4,4), 2),
-                               'Lrelu0': nn.LeakyReLU(0.2, True)})
+        basic_d = OrderedDict([('noise', GaussianNoise(0.05)),
+                               ('conv0', Conv2dSame(nc_in, ndf, (4,4), 2)),
+                               ('Lrelu0', nn.LeakyReLU(0.2, True))])
         in_feat = ndf
         for i in range(1, max_layers):
             out_feat = ndf * min(2**i, 8)
-            basic_d.update({'conv%d'%i: Conv2dSame(in_feat, out_feat, (4,4),
-                                                   2, bias=False),
-                            'bn%d'%(i-1): nn.InstanceNorm2d(out_feat, affine=True),
-                            'Lrelu%d'%i: nn.LeakyReLU(0.2, True)})
+            basic_d.update([
+                    ('conv%d'%i, Conv2dSame(in_feat, out_feat, (4,4), 2, bias=False)),
+                    ('bn%d'%(i-1), nn.InstanceNorm2d(out_feat, affine=True)),
+                    ('Lrelu%d'%i, nn.LeakyReLU(0.2, True))])
             in_feat = ndf * min(2**i, 8)
         
         out_feat = ndf * min(2**max_layers, 8)
-        basic_d.update({'pad1': nn.ZeroPad2d(1),
-                        'conv%d'%(max_layers+1): nn.Conv2d(in_feat, out_feat, 4, bias=False),
-                        'bn%d'%(max_layers+1): nn.InstanceNorm2d(out_feat, affine=True),
-                        'Lrelu%d'%(max_layers+1): nn.LeakyReLU(0.2, True),
-                        'pad2': nn.ZeroPad2d(1),
-                        'conv%d'%(max_layers+2): nn.Conv2d(out_feat, 1, 4)})
+        basic_d.update([
+                        ('pad1', nn.ZeroPad2d(1)),
+                        ('conv%d'%(max_layers+1), nn.Conv2d(in_feat, out_feat, 4, bias=False)),
+                        ('bn%d'%(max_layers+1), nn.InstanceNorm2d(out_feat, affine=True)),
+                        ('Lrelu%d'%(max_layers+1), nn.LeakyReLU(0.2, True)),
+                        ('pad2', nn.ZeroPad2d(1)),
+                        ('conv%d'%(max_layers+2), nn.Conv2d(out_feat, 1, 4))])
         if use_sigmoid:
             basic_d['sigmoid'] = nn.Sigmoid()
         self.D_net = nn.Sequential(basic_d)
@@ -126,15 +127,15 @@ class Res_SE_Block(nn.Module):
             norm_layer = partial(nn.InstanceNorm2d, affine=True)
         else:
             norm_layer = nn.BatchNorm2d
-        res_block = OrderedDict({
-            'conv0': Conv2dSame(nc_in, nc_out, 
-                                (4,3), bias=(not use_instancenorm)),
-            'bn0': norm_layer(nc_out),
-            'relu0': nn.ReLU(True),
-            'conv1': Conv2dSame(nc_out, nc_out,
-                                (4,3), bias=(not use_instancenorm)),
-            'bn1': norm_layer(nc_out)
-        })
+        res_block = OrderedDict([
+            ('conv0', Conv2dSame(nc_in, nc_out, 
+                                (4,3), bias=(not use_instancenorm))),
+            ('bn0', norm_layer(nc_out)),
+            ('relu0', nn.ReLU(True)),
+            ('conv1', Conv2dSame(nc_out, nc_out,
+                                (4,3), bias=(not use_instancenorm))),
+            ('bn1', norm_layer(nc_out))
+        ])
         self.res_block = nn.Sequential(res_block)
         self.se_block = SE_Block(nc_out)
         
